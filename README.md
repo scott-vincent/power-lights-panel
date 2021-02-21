@@ -7,7 +7,7 @@
 
 Download the following two files.
 
-Link: [Latest release of Power/Lights Panel for Raspberry Pi Zero W](https://github.com/scott-vincent/radio-panel/releases/latest/download/power-lights-panel-v1.1.0-raspi.tar.gz)
+Link: [Latest release of Power/Lights Panel for Raspberry Pi Zero W](https://github.com/scott-vincent/power-lights-panel/releases/latest/download/power-lights-panel-v1.1.0-raspi.tar.gz)
 
 Link: [Latest release of Instrument Data Link for Windows](https://github.com/scott-vincent/instrument-data-link/releases/latest/download/instrument-data-link-v1.5.0-windows-x64.zip)
 
