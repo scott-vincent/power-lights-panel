@@ -1,0 +1,81 @@
+{
+  "Data Link": {
+    "Host": "192.168.1.143",
+    "Port": 52020
+  },
+  "GPIO": {
+    "Battery1": {
+      "Switch": {
+        "Toggle": 2
+      }
+    },
+    "Battery2": {
+      "Switch": {
+        "Toggle": 3
+      }
+    },
+    "Fuel Pump": {
+      "Switch": {
+        "Toggle": 4
+      }
+    },
+    "Beacon": {
+      "Switch": {
+        "Toggle": 17
+      }
+    },
+    "Land": {
+      "Switch": {
+        "Toggle": 27
+      }
+    },
+    "Taxi": {
+      "Switch": {
+        "Toggle": 22
+      }
+    },
+    "Nav": {
+      "Switch": {
+        "Toggle": 10
+      }
+    },
+    "Strobe": {
+      "Switch": {
+        "Toggle": 9
+      }
+    },
+    "Pitot Heat": {
+      "Switch": {
+        "Toggle": 11
+      }
+    },
+    "Avionics1": {
+      "Switch": {
+        "Toggle": 12
+      }
+    },
+    "Avionics2": {
+      "Switch": {
+        "Toggle": 15
+      }
+    },
+    "APU Master": {
+      "Button": {
+        "Push": 18,
+        "Led": 23
+      }
+    },
+    "APU Start": {
+      "Button": {
+        "Push": 24,
+        "Led": 25
+      }
+    },
+    "APU Bleed": {
+      "Button": {
+        "Push": 8,
+        "Led": 7
+      }
+    }
+  }
+}
