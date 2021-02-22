@@ -99,7 +99,7 @@ void powerLights::update()
     prevApuPercentRpm = simVars->apuPercentRpm;
 
     if (lastApuBleedAdjust == 0) {
-        apuBleed = simVars->apuBleed > 0;
+        apuBleed = airliner && simVars->apuBleed > 0;
     }
 }
 
@@ -127,8 +127,10 @@ void powerLights::gpioSwitchesInput()
     int val = globals.gpioCtrl->readToggle(battery1Control);
     if (val != INT_MIN && val != prevBattery1Toggle) {
         // Switch toggled
-        // SDK bug - On not working on A320
-        globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+        if (!fixToggle) {
+            // SDK bug - On not working on A320
+            globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+        }
         prevBattery1Toggle = val;
     }
 
@@ -136,8 +138,10 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(battery2Control);
     if (val != INT_MIN && val != prevBattery2Toggle) {
         // Switch toggled
-        // SDK bug - On not working on A320
-        globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 2);
+        if (!fixToggle) {
+            // SDK bug - On not working on A320
+            globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 2);
+        }
         prevBattery2Toggle = val;
     }
 
@@ -145,12 +149,14 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(fuelPumpControl);
     if (val != INT_MIN && val != prevFuelPumpToggle) {
         // Switch toggled
-        // SDK bug - Not working for A320 so use vJoy
-        globals.simVars->write(KEY_FUEL_PUMP);
+        if (!fixToggle) {
+            // SDK bug - Not working for A320 so use vJoy
+            globals.simVars->write(KEY_FUEL_PUMP);
 #ifdef vJoyFallback
-        // Toggle fuel pump
-        globals.simVars->write(VJOY_BUTTON_1);
+            // Toggle fuel pump
+            globals.simVars->write(VJOY_BUTTON_1);
 #endif
+        }
         prevFuelPumpToggle = val;
     }
 
@@ -273,14 +279,16 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(avionics1Control);
     if (val != INT_MIN && val != prevAvionics1Toggle) {
         // Switch toggled
-        if (airliner) {
+        if (!fixToggle) {
+            if (airliner) {
 #ifdef vJoyFallback
-            // Toggle external power
-            globals.simVars->write(VJOY_BUTTON_14);
+                // Toggle external power
+                globals.simVars->write(VJOY_BUTTON_14);
 #endif
-        }
-        else {
-            globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 1);
+            }
+            else {
+                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 1);
+            }
         }
         prevAvionics1Toggle = val;
     }
@@ -289,11 +297,13 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(avionics2Control);
     if (val != INT_MIN && val != prevAvionics2Toggle) {
         // Switch toggled
-        if (airliner) {
-            globals.simVars->write(KEY_TOGGLE_JETWAY);
-        }
-        else {
-            globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 2);
+        if (!fixToggle) {
+            if (airliner) {
+                globals.simVars->write(KEY_TOGGLE_JETWAY);
+            }
+            else {
+                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 2);
+            }
         }
         prevAvionics2Toggle = val;
     }
@@ -342,9 +352,19 @@ void powerLights::gpioButtonsInput()
         if (prevApuBleedPush % 2 == 1) {
             // Button pushed
             apuBleed = !apuBleed;
-            globals.gpioCtrl->writeLed(apuBleedControl, apuBleed);
+            if (airliner) {
+                globals.gpioCtrl->writeLed(apuBleedControl, apuBleed);
+            }
             // Toggle APU bleed air source
             globals.simVars->write(VJOY_BUTTON_15);
+
+            // If APU Bleed is pressed and held a toggle
+            // can be switched without causing an action
+            // so you can fix an inverted toggle.
+            fixToggle = true;
+        }
+        else {
+            fixToggle = false;
         }
         prevApuBleedPush = val;
         time(&lastApuBleedAdjust);

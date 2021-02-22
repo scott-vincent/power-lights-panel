@@ -46,6 +46,7 @@ private:
     int prevApuMasterPush = 0;
     int prevApuStartPush = 0;
     int prevApuBleedPush = 0;
+    bool fixToggle = false;
     
     time_t lastApuAdjust = 0;
     time_t lastApuBleedAdjust = 0;
