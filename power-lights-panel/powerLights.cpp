@@ -34,7 +34,7 @@ void powerLights::render()
     // Write LEDs
     globals.gpioCtrl->writeLed(apuMasterControl, apuMaster);
     globals.gpioCtrl->writeLed(apuStartControl, apuStart && apuStartFlash < 8);
-    globals.gpioCtrl->writeLed(apuBleedControl, apuBleed);
+    globals.gpioCtrl->writeLed(apuBleedControl, apuBleed && airliner);
 }
 
 void powerLights::update()
@@ -99,7 +99,7 @@ void powerLights::update()
     prevApuPercentRpm = simVars->apuPercentRpm;
 
     if (lastApuBleedAdjust == 0) {
-        apuBleed = airliner && simVars->apuBleed > 0;
+        apuBleed = simVars->apuBleed > 0;
     }
 }
 
@@ -352,9 +352,7 @@ void powerLights::gpioButtonsInput()
         if (prevApuBleedPush % 2 == 1) {
             // Button pushed
             apuBleed = !apuBleed;
-            if (airliner) {
-                globals.gpioCtrl->writeLed(apuBleedControl, apuBleed);
-            }
+            globals.gpioCtrl->writeLed(apuBleedControl, apuBleed && airliner);
             // Toggle APU bleed air source
             globals.simVars->write(VJOY_BUTTON_15);
 
