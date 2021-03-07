@@ -127,7 +127,10 @@ void powerLights::gpioSwitchesInput()
     int val = globals.gpioCtrl->readToggle(battery1Control);
     if (val != INT_MIN && val != prevBattery1Toggle) {
         // Switch toggled
-        if (!fixToggle) {
+        // Only action if APU Bleed is not being pressed and held.
+        // This allows a toggle to be switched without causing an
+        // action (to fix an inverted toggle).
+        if (prevApuBleedPush % 2 == 1) {
             // SDK bug - On not working on A320
             globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
         }
@@ -137,8 +140,8 @@ void powerLights::gpioSwitchesInput()
     // Battery 2 toggle
     val = globals.gpioCtrl->readToggle(battery2Control);
     if (val != INT_MIN && val != prevBattery2Toggle) {
-        // Switch toggled
-        if (!fixToggle) {
+        // Switch toggled (ignore if APU Bleed being pressed)
+        if (prevApuBleedPush % 2 == 1) {
             // SDK bug - On not working on A320
             globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 2);
         }
@@ -148,8 +151,8 @@ void powerLights::gpioSwitchesInput()
     // Fuel Pump toggle
     val = globals.gpioCtrl->readToggle(fuelPumpControl);
     if (val != INT_MIN && val != prevFuelPumpToggle) {
-        // Switch toggled
-        if (!fixToggle) {
+        // Switch toggled (ignore if APU Bleed being pressed)
+        if (prevApuBleedPush % 2 == 1) {
             // SDK bug - Not working for A320 so use vJoy
             globals.simVars->write(KEY_FUEL_PUMP);
 #ifdef vJoyFallback
@@ -278,8 +281,8 @@ void powerLights::gpioSwitchesInput()
     // Avionics 1 toggle (external power on airliner)
     val = globals.gpioCtrl->readToggle(avionics1Control);
     if (val != INT_MIN && val != prevAvionics1Toggle) {
-        // Switch toggled
-        if (!fixToggle) {
+        // Switch toggled (ignore if APU Bleed being pressed)
+        if (prevApuBleedPush % 2 == 1) {
             if (airliner) {
 #ifdef vJoyFallback
                 // Toggle external power
@@ -296,8 +299,8 @@ void powerLights::gpioSwitchesInput()
     // Avionics 2 toggle (Jetway on airliner)
     val = globals.gpioCtrl->readToggle(avionics2Control);
     if (val != INT_MIN && val != prevAvionics2Toggle) {
-        // Switch toggled
-        if (!fixToggle) {
+        // Switch toggled (ignore if APU Bleed being pressed)
+        if (prevApuBleedPush % 2 == 1) {
             if (airliner) {
                 globals.simVars->write(KEY_TOGGLE_JETWAY);
             }
@@ -355,14 +358,6 @@ void powerLights::gpioButtonsInput()
             globals.gpioCtrl->writeLed(apuBleedControl, apuBleed && airliner);
             // Toggle APU bleed air source
             globals.simVars->write(VJOY_BUTTON_15);
-
-            // If APU Bleed is pressed and held a toggle
-            // can be switched without causing an action
-            // so you can fix an inverted toggle.
-            fixToggle = true;
-        }
-        else {
-            fixToggle = false;
         }
         prevApuBleedPush = val;
         time(&lastApuBleedAdjust);
