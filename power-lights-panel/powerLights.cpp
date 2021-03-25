@@ -33,7 +33,7 @@ void powerLights::render()
 
     // Write LEDs
     globals.gpioCtrl->writeLed(apuMasterControl, apuMaster);
-    globals.gpioCtrl->writeLed(apuStartControl, apuStart && apuStartFlash < 8);
+    globals.gpioCtrl->writeLed(apuStartControl, apuStart && apuStartFlash < 6);
     globals.gpioCtrl->writeLed(apuBleedControl, apuBleed && airliner);
 }
 
@@ -47,7 +47,8 @@ void powerLights::update()
         apuMaster = false;
         apuStart = false;
         apuBleed = false;
-        lastApuAdjust = 0;
+        lastApuMasterAdjust = 0;
+        lastApuStartAdjust = 0;
         lastApuBleedAdjust = 0;
     }
 
@@ -57,37 +58,24 @@ void powerLights::update()
 
     // Only update local values from sim if they are not currently being adjusted.
     // This stops them from jumping around due to lag of fetch/update cycle.
-    if (lastApuAdjust == 0) {
-        // APU Start can be flashing (on but not avail yet)
-        if (simVars->apuPercentStart == 0 && simVars->apuPercentRpm == 0) {
-            // Can't determine state of APU Master so assume no change
-            apuStart = false;
+    if (lastApuMasterAdjust == 0) {
+        apuMaster = simVars->apuMasterSw > 0;
+    }
+
+    if (lastApuStartAdjust == 0) {
+        if (simVars->apuStartAvail > 0) {
+            // APU is on and available
+            apuStart = true;
             apuStartFlash = 0;
         }
-        else if (simVars->apuPercentStart > 0) {
+        else if (simVars->apuStart > 0) {
             // APU is starting up
-            apuMaster = true;
             apuStart = true;
             apuStartFlash++;
         }
-        else if (simVars->apuPercentRpm < 95) {
-            if (simVars->apuPercentRpm > prevApuPercentRpm) {
-                // APU is starting up
-                apuMaster = true;
-                apuStart = true;
-                apuStartFlash++;
-            }
-            else if (simVars->apuPercentRpm < prevApuPercentRpm) {
-                // APU is shutting down so master must have been turned off
-                apuMaster = false;
-                apuStart = false;
-                apuStartFlash = 0;
-            }
-        }
         else {
-            // APU is on and available
-            apuMaster = true;
-            apuStart = true;
+            // APU is shut down
+            apuStart = false;
             apuStartFlash = 0;
         }
     }
@@ -95,8 +83,6 @@ void powerLights::update()
     if (apuStartFlash > 15) {
         apuStartFlash = 0;
     }
-
-    prevApuPercentRpm = simVars->apuPercentRpm;
 
     if (lastApuBleedAdjust == 0) {
         apuBleed = simVars->apuBleed > 0;
@@ -321,15 +307,14 @@ void powerLights::gpioButtonsInput()
             // Button pushed
             apuMaster = !apuMaster;
             globals.gpioCtrl->writeLed(apuMasterControl, apuMaster);
-            // SDK bug - Not working on A320
-            globals.simVars->write(KEY_APU_OFF_SWITCH);
+            globals.simVars->write(KEY_APU_OFF_SWITCH, apuMaster);
         }
         prevApuMasterPush = val;
-        time(&lastApuAdjust);
+        time(&lastApuMasterAdjust);
     }
-    else if (lastApuAdjust != 0) {
-        if (now - lastApuAdjust > 2) {
-            lastApuAdjust = 0;
+    else if (lastApuMasterAdjust != 0) {
+        if (now - lastApuMasterAdjust > 1) {
+            lastApuMasterAdjust = 0;
         }
     }
 
@@ -337,17 +322,22 @@ void powerLights::gpioButtonsInput()
     val = globals.gpioCtrl->readPush(apuStartControl);
     if (val != INT_MIN) {
         if (prevApuStartPush % 2 == 1) {
-            // Button pushed
-            apuStart = !apuStart;
-            apuStartFlash = 0;
-            globals.gpioCtrl->writeLed(apuStartControl, apuStart);
-            // SDK bug - Not working on A320
-            globals.simVars->write(KEY_APU_STARTER);
+            // Button pushed - Can only turn APU Start on, not off
+            if (!apuStart) {
+                apuStart = !apuStart;
+                apuStartFlash = 0;
+                globals.gpioCtrl->writeLed(apuStartControl, apuStart);
+                globals.simVars->write(KEY_APU_STARTER, apuStart);
+            }
         }
         prevApuStartPush = val;
-        time(&lastApuAdjust);
+        time(&lastApuStartAdjust);
     }
-    // lastApuAdjust is reset by apuMaster
+    else if (lastApuStartAdjust != 0) {
+        if (now - lastApuStartAdjust > 1) {
+            lastApuStartAdjust = 0;
+        }
+    }
 
     // APU Bleed push
     val = globals.gpioCtrl->readPush(apuBleedControl);
@@ -357,7 +347,7 @@ void powerLights::gpioButtonsInput()
             apuBleed = !apuBleed;
             globals.gpioCtrl->writeLed(apuBleedControl, apuBleed && airliner);
             // Toggle APU bleed air source
-            globals.simVars->write(VJOY_BUTTON_15);
+            globals.simVars->write(KEY_BLEED_AIR_SOURCE_CONTROL_SET, apuBleed);
         }
         prevApuBleedPush = val;
         time(&lastApuBleedAdjust);

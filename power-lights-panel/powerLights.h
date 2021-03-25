@@ -13,7 +13,6 @@ private:
     bool apuMaster = false;
     bool apuStart = false;
     int apuStartFlash = 0;
-    double prevApuPercentRpm = 0;
     bool apuBleed = false;
 
     // Hardware controls
@@ -47,7 +46,8 @@ private:
     int prevApuStartPush = 0;
     int prevApuBleedPush = 0;
     
-    time_t lastApuAdjust = 0;
+    time_t lastApuMasterAdjust = 0;
+    time_t lastApuStartAdjust = 0;
     time_t lastApuBleedAdjust = 0;
     time_t now;
 
