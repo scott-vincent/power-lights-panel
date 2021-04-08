@@ -30,7 +30,12 @@ private:
     int apuMasterControl = -1;
     int apuStartControl = -1;
     int apuBleedControl = -1;
-    
+    int flapsUpControl = -1;
+    int flapsMidControl = -1;
+    int flapsDownControl = -1;
+    int gearUpControl = -1;
+    int gearDownControl = -1;
+
     int prevBattery1Toggle = -1;
     int prevBattery2Toggle = -1;
     int prevFuelPumpToggle = -1;
@@ -45,10 +50,16 @@ private:
     int prevApuMasterPush = 0;
     int prevApuStartPush = 0;
     int prevApuBleedPush = 0;
-    
+    int prevFlapsUpToggle = -1;
+    int prevFlapsMidVal = 0;
+    int prevFlapsDownToggle = -1;
+    int prevGearUpToggle = -1;
+    int prevGearDownToggle = -1;
+
     time_t lastApuMasterAdjust = 0;
     time_t lastApuStartAdjust = 0;
     time_t lastApuBleedAdjust = 0;
+    time_t lastFlapsAdjust = 0;
     time_t now;
 
 public:
@@ -60,6 +71,8 @@ private:
     void addGpio();
     void gpioSwitchesInput();
     void gpioButtonsInput();
+    void gpioFlapsInput();
+    void gpioGearInput();
 };
 
 #endif // _POWER_LIGHTS_H

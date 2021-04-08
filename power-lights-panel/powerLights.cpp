@@ -40,7 +40,7 @@ void powerLights::render()
 void powerLights::update()
 {
     // Check for aircraft change
-    bool aircraftChanged = (loadedAircraft != globals.aircraft);
+    bool aircraftChanged = (globals.electrics && loadedAircraft != globals.aircraft);
     if (aircraftChanged) {
         loadedAircraft = globals.aircraft;
         airliner = (loadedAircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300);
@@ -50,11 +50,24 @@ void powerLights::update()
         lastApuMasterAdjust = 0;
         lastApuStartAdjust = 0;
         lastApuBleedAdjust = 0;
+        prevBeaconToggle = -1;
+        prevLandToggle = -1;
+        prevTaxiToggle = -1;
+        prevNavToggle = -1;
+        prevStrobeToggle = -1;
+        prevPitotHeatToggle = -1;
+        prevFlapsUpToggle = -1;
+        prevFlapsDownToggle = -1;
+        prevGearUpToggle = -1;
+        prevGearDownToggle = -1;
+        lastFlapsAdjust = 0;
     }
 
     time(&now);
     gpioSwitchesInput();
     gpioButtonsInput();
+    gpioFlapsInput();
+    gpioGearInput();
 
     // Only update local values from sim if they are not currently being adjusted.
     // This stops them from jumping around due to lag of fetch/update cycle.
@@ -105,6 +118,11 @@ void powerLights::addGpio()
     apuMasterControl = globals.gpioCtrl->addButton("APU Master");
     apuStartControl = globals.gpioCtrl->addButton("APU Start");
     apuBleedControl = globals.gpioCtrl->addButton("APU Bleed");
+    flapsUpControl = globals.gpioCtrl->addSwitch("Flaps Up");
+    flapsMidControl = globals.gpioCtrl->addRotaryEncoder("Flaps Mid");
+    flapsDownControl = globals.gpioCtrl->addSwitch("Flaps Down");
+    gearUpControl = globals.gpioCtrl->addSwitch("Gear Up");
+    gearDownControl = globals.gpioCtrl->addSwitch("Gear Down");
 }
 
 void powerLights::gpioSwitchesInput()
@@ -117,8 +135,14 @@ void powerLights::gpioSwitchesInput()
         // This allows a toggle to be switched without causing an
         // action (to fix an inverted toggle).
         if (prevApuBleedPush % 2 == 1) {
-            // SDK bug - On not working on A320
-            globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+            if (airliner) {
+                // SDK bug - On not working on A320
+                globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+            }
+            else {
+                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 1);
+                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 2);
+            }
         }
         prevBattery1Toggle = val;
     }
@@ -128,8 +152,13 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevBattery2Toggle) {
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
-            // SDK bug - On not working on A320
-            globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 2);
+            if (airliner) {
+                // SDK bug - On not working on A320
+                globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 2);
+            }
+            else {
+                globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+            }
         }
         prevBattery2Toggle = val;
     }
@@ -139,12 +168,16 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevFuelPumpToggle) {
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
-            // SDK bug - Not working for A320 so use vJoy
-            globals.simVars->write(KEY_FUEL_PUMP);
-#ifdef vJoyFallback
             // Toggle fuel pump
-            globals.simVars->write(VJOY_BUTTON_1);
+            if (airliner) {
+#ifdef vJoyFallback
+                // SDK bug - Not working for A320 so use vJoy
+                globals.simVars->write(VJOY_BUTTON_1);
 #endif
+            }
+            else {
+                globals.simVars->write(KEY_TOGGLE_ELECT_FUEL_PUMP);
+            }
         }
         prevFuelPumpToggle = val;
     }
@@ -276,7 +309,7 @@ void powerLights::gpioSwitchesInput()
 #endif
             }
             else {
-                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 1);
+                globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
             }
         }
         prevAvionics1Toggle = val;
@@ -291,7 +324,7 @@ void powerLights::gpioSwitchesInput()
                 globals.simVars->write(KEY_TOGGLE_JETWAY);
             }
             else {
-                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 2);
+                globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
             }
         }
         prevAvionics2Toggle = val;
@@ -356,5 +389,87 @@ void powerLights::gpioButtonsInput()
         if (now - lastApuBleedAdjust > 1) {
             lastApuBleedAdjust = 0;
         }
+    }
+}
+
+void powerLights::gpioFlapsInput()
+{
+    // Flaps up toggle
+    int val = globals.gpioCtrl->readToggle(flapsUpControl);
+    if (val != INT_MIN && val != prevFlapsUpToggle) {
+        // Switch toggled
+        if (val == 1) {
+            // Switch pressed
+            globals.simVars->write(KEY_FLAPS_UP);
+            prevFlapsUpToggle = val;
+            return;
+        }
+        prevFlapsUpToggle = val;
+    }
+
+    // Flaps down toggle
+    val = globals.gpioCtrl->readToggle(flapsDownControl);
+    if (val != INT_MIN && val != prevFlapsDownToggle) {
+        // Switch toggled
+        if (val == 1) {
+            // Switch pressed
+            globals.simVars->write(KEY_FLAPS_DOWN);
+            prevFlapsDownToggle = val;
+            return;
+        }
+        prevFlapsDownToggle = val;
+    }
+
+    // Flaps rotate
+    val = globals.gpioCtrl->readRotation(flapsMidControl);
+    if (val != INT_MIN) {
+        // Ignore lever movement until reset
+        if (lastFlapsAdjust != 0) {
+            prevFlapsMidVal = val;
+        }
+        else {
+            int diff = val - prevFlapsMidVal;
+            if (diff > 1) {
+                // Next flaps position
+                globals.simVars->write(KEY_FLAPS_INCR);
+                time(&lastFlapsAdjust);
+            }
+            else if (diff < -1) {
+                // Prev flaps position
+                globals.simVars->write(KEY_FLAPS_DECR);
+                time(&lastFlapsAdjust);
+            }
+        }
+    }
+    else if (lastFlapsAdjust != 0) {
+        if (now - lastFlapsAdjust > 0) {
+            // Reset if some time elapsed since last lever movement
+            lastFlapsAdjust = 0;
+        }
+    }
+}
+
+void powerLights::gpioGearInput()
+{
+    // Gear up toggle
+    int val = globals.gpioCtrl->readToggle(gearUpControl);
+    if (val != INT_MIN && val != prevGearUpToggle) {
+        // Switch toggled
+        if (val == 1) {
+            // Switch pressed
+            globals.simVars->write(KEY_GEAR_SET, 0);
+        }
+        prevGearUpToggle = val;
+    }
+
+    // Gear down toggle
+    val = globals.gpioCtrl->readToggle(gearDownControl);
+    if (val != INT_MIN && val != prevGearDownToggle) {
+        // Switch toggled
+        if (val == 1) {
+            // Switch pressed
+            globals.simVars->write(KEY_GEAR_SET, 1);
+        }
+        prevGearDownToggle = val;
     }
 }
