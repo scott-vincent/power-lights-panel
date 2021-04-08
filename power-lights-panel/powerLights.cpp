@@ -465,6 +465,7 @@ void powerLights::gpioParkBrakeInput()
         if (val == 1) {
             // Switch pressed
             globals.simVars->write(VJOY_BUTTON_15);
+            seenBrakeOff = true;
         }
         prevParkBrakeOffToggle = val;
     }
@@ -473,7 +474,7 @@ void powerLights::gpioParkBrakeInput()
     val = globals.gpioCtrl->readToggle(parkBrakeOnControl);
     if (val != INT_MIN && val != prevParkBrakeOnToggle) {
         // Switch toggled
-        if (val == 1) {
+        if (val == 1 && seenBrakeOff) {
             // Switch pressed
             globals.simVars->write(VJOY_BUTTON_16);
         }

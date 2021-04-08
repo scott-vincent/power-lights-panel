@@ -18,6 +18,7 @@ private:
     int flapsUpVal = 0;
     int flapsDownVal = 20;
     int lastFlapsPos = -1;      // 0 = up, 4 = full
+    bool seenBrakeOff = false;
 
     // Hardware controls
     int battery1Control = -1;
