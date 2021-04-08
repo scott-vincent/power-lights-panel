@@ -50,6 +50,7 @@ void powerLights::update()
         lastApuMasterAdjust = 0;
         lastApuStartAdjust = 0;
         lastApuBleedAdjust = 0;
+        lastFlapsPos = -1;
         prevBeaconToggle = -1;
         prevLandToggle = -1;
         prevTaxiToggle = -1;
@@ -58,16 +59,15 @@ void powerLights::update()
         prevPitotHeatToggle = -1;
         prevFlapsUpToggle = -1;
         prevFlapsDownToggle = -1;
-        prevGearUpToggle = -1;
-        prevGearDownToggle = -1;
-        lastFlapsAdjust = 0;
+        prevParkBrakeOffToggle = -1;
+        prevParkBrakeOnToggle = -1;
     }
 
     time(&now);
     gpioSwitchesInput();
     gpioButtonsInput();
     gpioFlapsInput();
-    gpioGearInput();
+    gpioParkBrakeInput();
 
     // Only update local values from sim if they are not currently being adjusted.
     // This stops them from jumping around due to lag of fetch/update cycle.
@@ -119,10 +119,10 @@ void powerLights::addGpio()
     apuStartControl = globals.gpioCtrl->addButton("APU Start");
     apuBleedControl = globals.gpioCtrl->addButton("APU Bleed");
     flapsUpControl = globals.gpioCtrl->addSwitch("Flaps Up");
-    flapsMidControl = globals.gpioCtrl->addRotaryEncoder("Flaps Mid");
+    flapsPosControl = globals.gpioCtrl->addRotaryEncoder("Flaps Pos");
     flapsDownControl = globals.gpioCtrl->addSwitch("Flaps Down");
-    gearUpControl = globals.gpioCtrl->addSwitch("Gear Up");
-    gearDownControl = globals.gpioCtrl->addSwitch("Gear Down");
+    parkBrakeOffControl = globals.gpioCtrl->addSwitch("Park Brake Off");
+    parkBrakeOnControl = globals.gpioCtrl->addSwitch("Park Brake On");
 }
 
 void powerLights::gpioSwitchesInput()
@@ -394,82 +394,89 @@ void powerLights::gpioButtonsInput()
 
 void powerLights::gpioFlapsInput()
 {
+    // Flaps rotate
+    int val = globals.gpioCtrl->readRotation(flapsPosControl);
+    if (val != INT_MIN) {
+        flapsVal = val;
+    }
+
     // Flaps up toggle
-    int val = globals.gpioCtrl->readToggle(flapsUpControl);
+    val = globals.gpioCtrl->readToggle(flapsUpControl);
     if (val != INT_MIN && val != prevFlapsUpToggle) {
         // Switch toggled
+        prevFlapsUpToggle = val;
         if (val == 1) {
             // Switch pressed
             globals.simVars->write(KEY_FLAPS_UP);
-            prevFlapsUpToggle = val;
+            lastFlapsPos = 0;
+            if (flapsVal != INT_MIN) {
+                flapsUpVal = flapsVal;  // Re-calibrate flaps values
+                int diff = flapsDownVal - flapsUpVal;
+                if (diff < 17 || diff > 23) {
+                    flapsDownVal = flapsUpVal + 20;
+                }
+            }
             return;
         }
-        prevFlapsUpToggle = val;
     }
 
     // Flaps down toggle
     val = globals.gpioCtrl->readToggle(flapsDownControl);
     if (val != INT_MIN && val != prevFlapsDownToggle) {
         // Switch toggled
+        prevFlapsDownToggle = val;
         if (val == 1) {
             // Switch pressed
             globals.simVars->write(KEY_FLAPS_DOWN);
-            prevFlapsDownToggle = val;
+            lastFlapsPos = 4;
+            if (flapsVal != INT_MIN) {
+                flapsDownVal = flapsVal;    // Re-calibrate flaps values
+                int diff = flapsDownVal - flapsUpVal;
+                if (diff < 17 || diff > 23) {
+                    flapsUpVal = flapsDownVal - 20;
+                }
+            }
             return;
         }
-        prevFlapsDownToggle = val;
     }
 
-    // Flaps rotate
-    val = globals.gpioCtrl->readRotation(flapsMidControl);
-    if (val != INT_MIN) {
-        // Ignore lever movement until reset
-        if (lastFlapsAdjust != 0) {
-            prevFlapsMidVal = val;
-        }
-        else {
-            int diff = val - prevFlapsMidVal;
-            if (diff > 1) {
-                // Next flaps position
-                globals.simVars->write(KEY_FLAPS_INCR);
-                time(&lastFlapsAdjust);
+    if (flapsVal != INT_MIN) {
+        // Check for new flaps position
+        double onePos = (flapsDownVal - flapsUpVal) / 4.0;
+        int flapsPos = (flapsVal + (onePos / 2.0) - flapsUpVal) / onePos;
+        if (flapsPos != lastFlapsPos) {
+            lastFlapsPos = flapsPos;
+            // Set flaps to position 1, 2 or 3
+            switch (flapsPos) {
+            case 1: globals.simVars->write(KEY_FLAPS_1); break;
+            case 2: globals.simVars->write(KEY_FLAPS_2); break;
+            case 3: globals.simVars->write(KEY_FLAPS_3); break;
             }
-            else if (diff < -1) {
-                // Prev flaps position
-                globals.simVars->write(KEY_FLAPS_DECR);
-                time(&lastFlapsAdjust);
-            }
-        }
-    }
-    else if (lastFlapsAdjust != 0) {
-        if (now - lastFlapsAdjust > 0) {
-            // Reset if some time elapsed since last lever movement
-            lastFlapsAdjust = 0;
         }
     }
 }
 
-void powerLights::gpioGearInput()
+void powerLights::gpioParkBrakeInput()
 {
-    // Gear up toggle
-    int val = globals.gpioCtrl->readToggle(gearUpControl);
-    if (val != INT_MIN && val != prevGearUpToggle) {
+    // Park brake off toggle
+    int val = globals.gpioCtrl->readToggle(parkBrakeOffControl);
+    if (val != INT_MIN && val != prevParkBrakeOffToggle) {
         // Switch toggled
         if (val == 1) {
             // Switch pressed
-            globals.simVars->write(KEY_GEAR_SET, 0);
+            globals.simVars->write(VJOY_BUTTON_15);
         }
-        prevGearUpToggle = val;
+        prevParkBrakeOffToggle = val;
     }
 
-    // Gear down toggle
-    val = globals.gpioCtrl->readToggle(gearDownControl);
-    if (val != INT_MIN && val != prevGearDownToggle) {
+    // Park brake on toggle
+    val = globals.gpioCtrl->readToggle(parkBrakeOnControl);
+    if (val != INT_MIN && val != prevParkBrakeOnToggle) {
         // Switch toggled
         if (val == 1) {
             // Switch pressed
-            globals.simVars->write(KEY_GEAR_SET, 1);
+            globals.simVars->write(VJOY_BUTTON_16);
         }
-        prevGearDownToggle = val;
+        prevParkBrakeOnToggle = val;
     }
 }

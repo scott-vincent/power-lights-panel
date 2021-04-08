@@ -79,13 +79,13 @@
     },
     "Flaps Up": {
       "Switch": {
-        "Toggle": 6
+        "Toggle": 26
       }
     },
-    "Flaps Mid": {
+    "Flaps Pos": {
       "RotaryEncoder": {
-        "Rot1": 5,
-        "Rot2": 26
+        "Rot1": 6,
+        "Rot2": 5
       }
     },
     "Flaps Down": {
@@ -93,12 +93,12 @@
         "Toggle": 16
       }
     },
-    "Gear Up": {
+    "Park Brake Off": {
       "Switch": {
         "Toggle": 19
       }
     },
-    "Gear Down": {
+    "Park Brake On": {
       "Switch": {
         "Toggle": 13
       }
