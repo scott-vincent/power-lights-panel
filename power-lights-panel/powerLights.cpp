@@ -51,6 +51,7 @@ void powerLights::update()
         lastApuStartAdjust = 0;
         lastApuBleedAdjust = 0;
         lastFlapsPos = -1;
+        parkBrakeOn = true;
         prevBeaconToggle = -1;
         prevLandToggle = -1;
         prevTaxiToggle = -1;
@@ -462,10 +463,10 @@ void powerLights::gpioParkBrakeInput()
     int val = globals.gpioCtrl->readToggle(parkBrakeOffControl);
     if (val != INT_MIN && val != prevParkBrakeOffToggle) {
         // Switch toggled
-        if (val == 1) {
+        if (val == 1 && parkBrakeOn) {
             // Switch pressed
             globals.simVars->write(VJOY_BUTTON_15);
-            seenBrakeOff = true;
+            parkBrakeOn = false;
         }
         prevParkBrakeOffToggle = val;
     }
@@ -474,9 +475,10 @@ void powerLights::gpioParkBrakeInput()
     val = globals.gpioCtrl->readToggle(parkBrakeOnControl);
     if (val != INT_MIN && val != prevParkBrakeOnToggle) {
         // Switch toggled
-        if (val == 1 && seenBrakeOff) {
+        if (val == 1 && !parkBrakeOn) {
             // Switch pressed
             globals.simVars->write(VJOY_BUTTON_16);
+            parkBrakeOn = true;
         }
         prevParkBrakeOnToggle = val;
     }
