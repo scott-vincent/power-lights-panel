@@ -43,7 +43,7 @@ void powerLights::update()
     bool aircraftChanged = (globals.electrics && loadedAircraft != globals.aircraft);
     if (aircraftChanged) {
         loadedAircraft = globals.aircraft;
-        airliner = (loadedAircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300);
+        airliner = (loadedAircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300 && loadedAircraft != CESSNA_CJ4);
         apuMaster = false;
         apuStart = false;
         apuBleed = false;
