@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="globals.cpp" />
     <ClCompile Include="powerLights-panel.cpp" />
     <ClCompile Include="powerLights.cpp" />
     <ClCompile Include="gpioctrl.cpp" />
