@@ -83,7 +83,6 @@ void resetConnection(simvars* thisPtr)
 {
     // Only want a subset of SimVars for Power Lights panel (to save bandwidth)
     long dataSize = (long)(&thisPtr->simVars.apuPercentRpm) + sizeof(double) - (long)&thisPtr->simVars;
-    Request request;
     request.requestedSize = dataSize;
 
     // Want full data on first connect
