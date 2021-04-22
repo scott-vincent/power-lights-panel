@@ -136,8 +136,11 @@ void powerLights::gpioSwitchesInput()
         // This allows a toggle to be switched without causing an
         // action (to fix an inverted toggle).
         if (prevApuBleedPush % 2 == 1) {
-            if (airliner) {
-                // SDK bug - On not working on A320
+            if (globals.aircraft == FBW_A320NEO) {
+                globals.simVars->write(KEY_ELEC_BAT1, val);
+            }
+            else if (airliner) {
+                // SDK bug - On not working
                 globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
             }
             else {
@@ -153,8 +156,11 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevBattery2Toggle) {
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
-            if (airliner) {
-                // SDK bug - On not working on A320
+            if (globals.aircraft == FBW_A320NEO) {
+                globals.simVars->write(KEY_ELEC_BAT2, val);
+            }
+            else if (airliner) {
+                // SDK bug - On not working
                 globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 2);
             }
             else {
