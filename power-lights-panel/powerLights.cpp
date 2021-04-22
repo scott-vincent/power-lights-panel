@@ -170,15 +170,7 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
             // Toggle fuel pump
-            if (airliner) {
-#ifdef vJoyFallback
-                // SDK bug - Not working for A320 so use vJoy
-                globals.simVars->write(VJOY_BUTTON_1);
-#endif
-            }
-            else {
-                globals.simVars->write(KEY_TOGGLE_ELECT_FUEL_PUMP);
-            }
+            globals.simVars->write(KEY_FUEL_PUMP);
         }
         prevFuelPumpToggle = val;
     }
