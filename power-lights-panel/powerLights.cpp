@@ -43,7 +43,8 @@ void powerLights::update()
     bool aircraftChanged = (globals.electrics && loadedAircraft != globals.aircraft);
     if (aircraftChanged) {
         loadedAircraft = globals.aircraft;
-        airliner = (loadedAircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300 && loadedAircraft != CESSNA_CJ4);
+        airliner = (loadedAircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300
+            && loadedAircraft != CESSNA_CJ4 && loadedAircraft != F15_EAGLE);
         apuMaster = false;
         apuStart = false;
         apuBleed = false;
@@ -281,8 +282,8 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevPitotHeatToggle) {
         // Switch toggled
         globals.simVars->write(KEY_PITOT_HEAT_SET, val);
-        // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_ANTI_ICE_SET, val);
+        // SDK bug - Not working for A320 so use vJoy
 #ifdef vJoyFallback
         if (val == 0) {
             // Anti ice off
@@ -463,6 +464,7 @@ void powerLights::gpioParkBrakeInput()
         // Switch toggled
         if (val == 1 && parkBrakeOn) {
             // Switch pressed
+            globals.simVars->write(VJOY_BUTTON_16);
             globals.simVars->write(VJOY_BUTTON_15);
             parkBrakeOn = false;
         }
