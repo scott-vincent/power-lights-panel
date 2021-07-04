@@ -13,7 +13,7 @@
 #include "simvars.h"
 #include "powerLights.h"
 
-const char* powerLightsVersion = "v1.2.2";
+const char* powerLightsVersion = "v1.2.3";
 const bool Debug = false;
 
 struct globalVars globals;
