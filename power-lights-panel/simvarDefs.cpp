@@ -34,6 +34,7 @@ const char* SimVarDefs[][2] = {
 
     // Vars for Power/Lights panel
     { "Light On States", "mask" },
+    { "Brake Parking Position", "bool" },
     { "Apu Pct Rpm", "percent" },
 
     // Vars for Radio panel
@@ -126,7 +127,6 @@ const char* SimVarDefs[][2] = {
     { "Gear Left Position", "percent" },
     { "Gear Center Position", "percent" },
     { "Gear Right Position", "percent" },
-    { "Brake Parking Position", "bool" },
     { "Pushback State", "enum" },
     { "Rudder Position", "position" },
     { "General Eng Oil Temperature:1", "fahrenheit" },
@@ -225,6 +225,7 @@ WriteEvent WriteEvents[] = {
     { KEY_BLEED_AIR_SOURCE_CONTROL_SET, "BLEED_AIR_SOURCE_CONTROL_SET" },
     { KEY_CABIN_SEATBELTS_ALERT_SWITCH_TOGGLE, "CABIN_SEATBELTS_ALERT_SWITCH_TOGGLE" },
     { KEY_TOGGLE_PUSHBACK, "TOGGLE_PUSHBACK" },
+    { KEY_PARKING_BRAKES, "PARKING_BRAKES" },
     { KEY_AUTOBRAKE, "AUTOBRAKE" },
     { A32NX_FCU_SPD_PUSH, "A32NX.FCU_SPD_PUSH" },
     { A32NX_FCU_SPD_PULL, "A32NX.FCU_SPD_PULL" },
