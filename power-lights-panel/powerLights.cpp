@@ -62,7 +62,7 @@ void powerLights::update()
         prevFlapsDownToggle = -1;
         prevParkBrakeOffToggle = -1;
         prevParkBrakeOnToggle = -1;
-        if (!simVars->parkingBrakeOn) {
+        if (simVars->altAboveGround < 50 && !simVars->parkingBrakeOn) {
             // Start with parking brake on
             globals.simVars->write(VJOY_BUTTON_16);
         }
