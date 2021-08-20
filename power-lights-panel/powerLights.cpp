@@ -447,14 +447,22 @@ void powerLights::gpioFlapsInput()
         // Check for new flaps position
         double onePos = (flapsDownVal - flapsUpVal) / 4.0;
         int flapsPos = (flapsVal + (onePos / 2.0) - flapsUpVal) / onePos;
+        if (simVars->tfFlapsCount == 6) {
+            // Boeing 747 has 6 flap positions so insert 2 extra
+            // flap positions between 1,2 and 3,full
+            double halfPos = (flapsDownVal - flapsUpVal) / 8.0;
+            int flapsHalfPos = (flapsVal + (halfPos / 2.0) - flapsUpVal) / halfPos;
+            if (flapsHalfPos >= 3) {
+                flapsPos++;
+            }
+            if (flapsHalfPos >= 7) {
+                flapsPos++;
+            }
+        }
         if (flapsPos != lastFlapsPos) {
             lastFlapsPos = flapsPos;
-            // Set flaps to position 1, 2 or 3
-            switch (flapsPos) {
-            case 1: globals.simVars->write(KEY_FLAPS_1); break;
-            case 2: globals.simVars->write(KEY_FLAPS_2); break;
-            case 3: globals.simVars->write(KEY_FLAPS_3); break;
-            }
+            double flapsSet = 16384.0 * flapsPos / simVars->tfFlapsCount;
+            globals.simVars->write(KEY_FLAPS_SET, flapsSet);
         }
     }
 }
