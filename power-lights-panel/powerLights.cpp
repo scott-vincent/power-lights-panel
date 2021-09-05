@@ -398,13 +398,10 @@ void powerLights::gpioButtonsInput()
 void powerLights::gpioFlapsInput()
 {
     // Flaps rotate
-    int val = globals.gpioCtrl->readRotation(flapsPosControl);
-    if (val != INT_MIN) {
-        flapsVal = val;
-    }
+    int flapsVal = globals.gpioCtrl->readRotation(flapsPosControl);
 
     // Flaps up toggle
-    val = globals.gpioCtrl->readToggle(flapsUpControl);
+    int val = globals.gpioCtrl->readToggle(flapsUpControl);
     if (val != INT_MIN && val != prevFlapsUpToggle) {
         // Switch toggled
         prevFlapsUpToggle = val;
@@ -431,7 +428,12 @@ void powerLights::gpioFlapsInput()
         if (val == 1) {
             // Switch pressed
             globals.simVars->write(KEY_FLAPS_DOWN);
-            lastFlapsPos = 4;
+            if (simVars->tfFlapsCount == 5) {
+                lastFlapsPos = 4;
+            }
+            else {
+                lastFlapsPos = simVars->tfFlapsCount;
+            }
             if (flapsVal != INT_MIN) {
                 flapsDownVal = flapsVal;    // Re-calibrate flaps values
                 int diff = flapsDownVal - flapsUpVal;
@@ -460,9 +462,23 @@ void powerLights::gpioFlapsInput()
             }
         }
         if (flapsPos != lastFlapsPos) {
+            if (lastFlapsPos != -1) {
+                if (simVars->tfFlapsCount == 5) {
+                    while (flapsPos > lastFlapsPos) {
+                        globals.simVars->write(KEY_FLAPS_INCR);
+                        lastFlapsPos++;
+                    }
+                    while (flapsPos < lastFlapsPos) {
+                        globals.simVars->write(KEY_FLAPS_DECR);
+                        lastFlapsPos--;
+                    }
+                }
+                else {
+                    double flapsSet = 16384.0 * flapsPos / simVars->tfFlapsCount;
+                    globals.simVars->write(KEY_FLAPS_SET, flapsSet);
+                }
+            }
             lastFlapsPos = flapsPos;
-            double flapsSet = 16384.0 * flapsPos / simVars->tfFlapsCount;
-            globals.simVars->write(KEY_FLAPS_SET, flapsSet);
         }
     }
 }
