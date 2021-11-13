@@ -39,12 +39,14 @@ void powerLights::render()
 
 void powerLights::update()
 {
+    // Need to know if airliner even when electrics are off
+    airliner = (globals.aircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300
+        && globals.aircraft != CESSNA_CJ4 && globals.aircraft != F15_EAGLE);
+
     // Check for aircraft change
     bool aircraftChanged = (globals.electrics && loadedAircraft != globals.aircraft);
     if (aircraftChanged) {
         loadedAircraft = globals.aircraft;
-        airliner = (loadedAircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300
-            && loadedAircraft != CESSNA_CJ4 && loadedAircraft != F15_EAGLE);
         apuMaster = false;
         apuStart = false;
         apuBleed = false;
@@ -63,7 +65,7 @@ void powerLights::update()
         prevParkBrakeOffToggle = -1;
         prevParkBrakeOnToggle = -1;
         if (simVars->altAboveGround < 50 && !simVars->parkingBrakeOn) {
-            // Start with parking brake on
+            // Start with parking brake on (will only turn on when electrics enabled!)
             globals.simVars->write(VJOY_BUTTON_16);
         }
     }
@@ -77,16 +79,22 @@ void powerLights::update()
     // Only update local values from sim if they are not currently being adjusted.
     // This stops them from jumping around due to lag of fetch/update cycle.
     if (lastApuMasterAdjust == 0) {
-        apuMaster = simVars->apuMasterSw > 0;
+        // Only relevant to A32NX
+        if (loadedAircraft == FBW_A320NEO) {
+            apuMaster = simVars->apuMasterSw > 0;
+        }
+        else if (simVars->apuStartSwitch > 0) {
+            apuMaster = true;
+        }
     }
 
     if (lastApuStartAdjust == 0) {
-        if (simVars->apuStartAvail > 0) {
+        if (simVars->apuPercentRpm == 100) {
             // APU is on and available
             apuStart = true;
             apuStartFlash = 0;
         }
-        else if (simVars->apuStart > 0) {
+        else if (simVars->apuStartSwitch > 0) {
             // APU is starting up
             apuStart = true;
             apuStartFlash++;
@@ -103,7 +111,14 @@ void powerLights::update()
     }
 
     if (lastApuBleedAdjust == 0) {
-        apuBleed = simVars->apuBleed > 0;
+        // Only relevant to A32NX
+        if (loadedAircraft == FBW_A320NEO) {
+            apuBleed = simVars->apuBleed > 0;
+        }
+        else if (simVars->apuPercentRpm == 100) {
+            // APU bleed seems to be automatic on 747
+            apuBleed = true;
+        }
     }
 }
 
@@ -144,8 +159,12 @@ void powerLights::gpioSwitchesInput()
                 globals.simVars->write(KEY_ELEC_BAT1, val);
             }
             else if (airliner) {
-                // SDK bug - On not working
-                globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+                // SDK bug - Not working
+                // globals.simVars->write(KEY_TOGGLE_MASTER_BATTERY, 1);
+#ifdef vJoyFallback
+                // Toggle master battery using vJoy
+                globals.simVars->write(VJOY_BUTTON_15);
+#endif
             }
             else {
                 globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 1);
@@ -180,7 +199,11 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
             // Toggle fuel pump
-            globals.simVars->write(KEY_FUEL_PUMP);
+            // globals.simVars->write(KEY_FUEL_PUMP);
+#ifdef vJoyFallback
+            // Not working so use vJoy
+            globals.simVars->write(VJOY_BUTTON_11);
+#endif
         }
         prevFuelPumpToggle = val;
     }
@@ -191,16 +214,6 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled
         // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_BEACON_LIGHTS_SET, val);
-#ifdef vJoyFallback
-        if (val == 0) {
-            // Beacon off
-            globals.simVars->write(VJOY_BUTTON_2);
-        }
-        else {
-            // Beacon on
-            globals.simVars->write(VJOY_BUTTON_3);
-        }
-#endif
         prevBeaconToggle = val;
     }
 
@@ -210,16 +223,6 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled
         // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_LANDING_LIGHTS_SET, val);
-#ifdef vJoyFallback
-        if (val == 0) {
-            // Landing off
-            globals.simVars->write(VJOY_BUTTON_4);
-        }
-        else {
-            // Landing on
-            globals.simVars->write(VJOY_BUTTON_5);
-        }
-#endif
         prevLandToggle = val;
     }
 
@@ -229,16 +232,6 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled
         // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_TAXI_LIGHTS_SET, val);
-#ifdef vJoyFallback
-        if (val == 0) {
-            // Taxi off
-            globals.simVars->write(VJOY_BUTTON_6);
-        }
-        else {
-            // Taxi on
-            globals.simVars->write(VJOY_BUTTON_7);
-        }
-#endif
         prevTaxiToggle = val;
     }
 
@@ -248,16 +241,6 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled
         // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_NAV_LIGHTS_SET, val);
-#ifdef vJoyFallback
-        if (val == 0) {
-            // Nav off
-            globals.simVars->write(VJOY_BUTTON_8);
-        }
-        else {
-            // Nav on
-            globals.simVars->write(VJOY_BUTTON_9);
-        }
-#endif
         prevNavToggle = val;
     }
 
@@ -267,16 +250,6 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled
         // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_STROBES_SET, val);
-#ifdef vJoyFallback
-        if (val == 0) {
-            // Strobe off
-            globals.simVars->write(VJOY_BUTTON_10);
-        }
-        else {
-            // Strobe on
-            globals.simVars->write(VJOY_BUTTON_11);
-        }
-#endif
         prevStrobeToggle = val;
     }
 
@@ -285,7 +258,8 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevPitotHeatToggle) {
         // Switch toggled
         globals.simVars->write(KEY_PITOT_HEAT_SET, val);
-        globals.simVars->write(KEY_ANTI_ICE_SET, val);
+
+        //globals.simVars->write(KEY_ANTI_ICE_SET, val);
         // SDK bug - Not working for A320 so use vJoy
 #ifdef vJoyFallback
         if (val == 0) {
@@ -359,8 +333,8 @@ void powerLights::gpioButtonsInput()
     if (val != INT_MIN) {
         if (prevApuStartPush % 2 == 1) {
             // Button pushed - Can only turn APU Start on, not off
-            if (!apuStart) {
-                apuStart = !apuStart;
+            if (apuMaster && !apuStart) {
+                apuStart = true;
                 apuStartFlash = 0;
                 globals.gpioCtrl->writeLed(apuStartControl, apuStart);
                 globals.simVars->write(KEY_APU_STARTER, apuStart);
