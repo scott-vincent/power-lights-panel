@@ -115,9 +115,9 @@ void powerLights::update()
         if (loadedAircraft == FBW_A320NEO) {
             apuBleed = simVars->apuBleed > 0;
         }
-        else if (simVars->apuPercentRpm == 100) {
+        else {
             // APU bleed seems to be automatic on 747
-            apuBleed = true;
+            apuBleed = simVars->apuPercentRpm == 100;
         }
     }
 }
