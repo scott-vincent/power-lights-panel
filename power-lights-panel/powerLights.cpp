@@ -475,7 +475,7 @@ void powerLights::gpioParkBrakeInput()
     if (val != INT_MIN && val != prevParkBrakeOnToggle) {
         // Switch toggled
         if (val == 1 && !simVars->parkingBrakeOn) {
-            // Switch pressed so parking brake on
+            // Switch pressed and parking brake off so apply it
             globals.simVars->write(VJOY_BUTTON_16);
         }
         prevParkBrakeOnToggle = val;
