@@ -64,9 +64,13 @@ void powerLights::update()
         prevFlapsDownToggle = -1;
         prevParkBrakeOffToggle = -1;
         prevParkBrakeOnToggle = -1;
-        if (simVars->altAboveGround < 50 && !simVars->parkingBrakeOn) {
+        if (simVars->altAboveGround < 50) {
             // Start with parking brake on (will only turn on when electrics enabled!)
-            globals.simVars->write(VJOY_BUTTON_16);
+            if (!simVars->parkingBrakeOn) {
+                globals.simVars->write(VJOY_BUTTON_16);
+            }
+            // Start with beacon off
+            globals.simVars->write(KEY_BEACON_LIGHTS_SET, 0);
         }
     }
 
@@ -212,7 +216,6 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(beaconControl);
     if (val != INT_MIN && val != prevBeaconToggle) {
         // Switch toggled
-        // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_BEACON_LIGHTS_SET, val);
         prevBeaconToggle = val;
     }
@@ -221,7 +224,6 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(landControl);
     if (val != INT_MIN && val != prevLandToggle) {
         // Switch toggled
-        // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_LANDING_LIGHTS_SET, val);
         prevLandToggle = val;
     }
@@ -230,7 +232,6 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(taxiControl);
     if (val != INT_MIN && val != prevTaxiToggle) {
         // Switch toggled
-        // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_TAXI_LIGHTS_SET, val);
         prevTaxiToggle = val;
     }
@@ -239,7 +240,6 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(navControl);
     if (val != INT_MIN && val != prevNavToggle) {
         // Switch toggled
-        // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_NAV_LIGHTS_SET, val);
         prevNavToggle = val;
     }
@@ -248,7 +248,6 @@ void powerLights::gpioSwitchesInput()
     val = globals.gpioCtrl->readToggle(strobeControl);
     if (val != INT_MIN && val != prevStrobeToggle) {
         // Switch toggled
-        // SDK bug - Not working for A320 so use vJoy
         globals.simVars->write(KEY_STROBES_SET, val);
         prevStrobeToggle = val;
     }
