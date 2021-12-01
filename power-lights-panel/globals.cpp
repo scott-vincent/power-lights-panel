@@ -34,11 +34,17 @@ void identifyAircraft(char* aircraft)
         else if (strncmp(aircraft, globals.Boeing_747_Text, globals.Boeing_747_Len) == 0) {
             globals.aircraft = BOEING_747;
         }
+        else if (strncmp(aircraft, globals.Boeing_787_Text, globals.Boeing_787_Len) == 0) {
+            globals.aircraft = BOEING_787;
+        }
         else if (strncmp(aircraft, globals.Supermarine_Spitfire_Text, globals.Supermarine_Spitfire_Len) == 0) {
             globals.aircraft = SUPERMARINE_SPITFIRE;
         }
         else if (strncmp(aircraft, globals.F15_Eagle_Text, globals.F15_Eagle_Len) == 0) {
             globals.aircraft = F15_EAGLE;
+        }
+        else if (strncmp(aircraft, globals.F18_Hornet_Text, globals.F18_Hornet_Len) == 0) {
+            globals.aircraft = F18_HORNET;
         }
         else {
             // Need to flip between other aircraft so that instruments

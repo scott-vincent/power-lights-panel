@@ -41,7 +41,7 @@ void powerLights::update()
 {
     // Need to know if airliner even when electrics are off
     airliner = (globals.aircraft != NO_AIRCRAFT && simVars->cruiseSpeed >= 300
-        && globals.aircraft != CESSNA_CJ4 && globals.aircraft != F15_EAGLE);
+        && globals.aircraft != CESSNA_CJ4 && globals.aircraft != F15_EAGLE && globals.aircraft != F18_HORNET);
 
     // Check for aircraft change
     bool aircraftChanged = (globals.electrics && loadedAircraft != globals.aircraft);
@@ -431,6 +431,29 @@ void powerLights::gpioFlapsInput()
                 flapsPos++;
             }
             if (flapsHalfPos >= 7) {
+                flapsPos++;
+            }
+        }
+        else if (simVars->tfFlapsCount == 9) {
+            // Boeing 787 has 9 flap positions so insert 2 extra flap
+            // positions between 1,2 and 3,full and 3 between 2,3.
+            double halfPos = (flapsDownVal - flapsUpVal) / 8.0;
+            int flapsHalfPos = (flapsVal + (halfPos / 2.0) - flapsUpVal) / halfPos;
+            double thirdPos = (flapsDownVal - flapsUpVal) / 12.0;
+            int flapsThirdPos = (flapsVal + (thirdPos / 3.0) - flapsUpVal) / thirdPos;
+            if (flapsHalfPos >= 3) {
+                flapsPos++;
+            }
+            if (flapsHalfPos >= 7) {
+                flapsPos++;
+            }
+            if (flapsThirdPos >= 7) {
+                flapsPos++;
+            }
+            if (flapsThirdPos >= 8) {
+                flapsPos++;
+            }
+            if (flapsThirdPos >= 9) {
                 flapsPos++;
             }
         }
