@@ -93,6 +93,8 @@ void powerLights::update()
     }
 
     if (lastApuStartAdjust == 0) {
+        printf("apuStart: %f  flash: %d  parkBrake: %f\n", simVars->apuStartSwitch, apuStartFlash, simVars->parkingBrakeOn);
+        fflush(stdout);
         if (simVars->apuPercentRpm == 100) {
             // APU is on and available
             apuStart = true;
@@ -488,6 +490,8 @@ void powerLights::gpioParkBrakeInput()
         if (val == 1 && simVars->parkingBrakeOn) {
             // Switch pressed and parking brake on so release it
             globals.simVars->write(VJOY_BUTTON_16);
+            printf("Park brake now OFF\n");
+            fflush(stdout);
         }
         prevParkBrakeOffToggle = val;
     }
@@ -499,6 +503,8 @@ void powerLights::gpioParkBrakeInput()
         if (val == 1 && !simVars->parkingBrakeOn) {
             // Switch pressed and parking brake off so apply it
             globals.simVars->write(VJOY_BUTTON_16);
+            printf("Park brake now ON\n");
+            fflush(stdout);
         }
         prevParkBrakeOnToggle = val;
     }
