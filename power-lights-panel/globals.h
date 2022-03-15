@@ -65,6 +65,7 @@ struct globalVars
     Aircraft aircraft;
     char lastAircraft[32];
 
+    long dataRateFps = 8;
     bool quit = false;
     bool dataLinked = false;
     bool connected = false;

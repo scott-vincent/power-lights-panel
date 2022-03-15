@@ -12,6 +12,7 @@ bool prevConnected = false;
 long dataSize;
 Request request;
 char deltaData[8192];
+int nextFull = 0;
 
 void dataLink(simvars*);
 void identifyAircraft(char* aircraft);
@@ -87,6 +88,7 @@ void resetConnection(simvars* thisPtr)
 
     // Want full data on first connect
     request.wantFullData = 1;
+    nextFull = globals.dataRateFps * 2;
 
     globals.dataLinked = false;
     globals.connected = false;
@@ -164,6 +166,14 @@ void dataLink(simvars* thisPtr)
 
     while (!globals.quit) {
         // Poll instrument data link
+        if (nextFull > 0) {
+            nextFull--;
+            request.wantFullData = 0;
+        }
+        else {
+            nextFull = globals.dataRateFps * 2;
+            request.wantFullData = 1;
+        }
         bytes = sendto(sockfd, (char*)&request, sizeof(request), 0, (SOCKADDR*)&addr, sizeof(addr));
 
         if (bytes > 0) {
@@ -188,9 +198,6 @@ void dataLink(simvars* thisPtr)
                     if (bytes == dataSize) {
                         // Full data received
                         memcpy((char*)&thisPtr->simVars, deltaData, dataSize);
-
-                        // Want deltas from now on
-                        request.wantFullData = 0;
                     }
                     else {
                         // Delta received
@@ -219,8 +226,7 @@ void dataLink(simvars* thisPtr)
             resetConnection(thisPtr);
         }
 
-        // Update 5 times per second
-        usleep(200000);
+        usleep(1000000 / globals.dataRateFps);
     }
 
     closesocket(sockfd);
