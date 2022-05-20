@@ -297,7 +297,10 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
             if (airliner) {
-                globals.simVars->write(KEY_TOGGLE_JETWAY);
+                // Don't re-engage jetway if pushback being requested
+                if (simVars->pushbackState > 0) {
+                    globals.simVars->write(KEY_TOGGLE_JETWAY);
+                }
             }
             else {
                 globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
