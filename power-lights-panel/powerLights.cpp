@@ -67,7 +67,7 @@ void powerLights::update()
         if (simVars->altAboveGround < 50) {
             // Start with parking brake on (will only turn on when electrics enabled!)
             if (!simVars->parkingBrakeOn) {
-                globals.simVars->write(VJOY_BUTTON_16);
+                globals.simVars->write(KEY_PARKING_BRAKE_SET, 1);
             }
             // Start with beacon off
             globals.simVars->write(KEY_BEACON_LIGHTS_SET, 0);
@@ -203,10 +203,12 @@ void powerLights::gpioSwitchesInput()
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
             // Toggle fuel pump
-            // globals.simVars->write(KEY_FUEL_PUMP);
+            globals.simVars->write(KEY_FUEL_PUMP);
+            // Use same switch to toggle dome light on Cessna 152
+            globals.simVars->write(KEY_CABIN_LIGHTS_SET, val);
 #ifdef vJoyFallback
             // Not working so use vJoy
-            globals.simVars->write(VJOY_BUTTON_11);
+            //globals.simVars->write(VJOY_BUTTON_11);
 #endif
         }
         prevFuelPumpToggle = val;
@@ -257,19 +259,21 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevPitotHeatToggle) {
         // Switch toggled
         globals.simVars->write(KEY_PITOT_HEAT_SET, val);
-
         //globals.simVars->write(KEY_ANTI_ICE_SET, val);
+        //globals.simVars->write(KEY_WINDSHIELD_DEICE_SET, val);
         // SDK bug - Not working for A320 so use vJoy
+        if (loadedAircraft != CESSNA_152 && loadedAircraft != CESSNA_172 && loadedAircraft != UNDEFINED) {
 #ifdef vJoyFallback
-        if (val == 0) {
-            // Anti ice off
-            globals.simVars->write(VJOY_BUTTON_12);
-        }
-        else {
-            // Anti ice on
-            globals.simVars->write(VJOY_BUTTON_13);
-        }
+            if (val == 0) {
+                // Anti ice off
+                globals.simVars->write(VJOY_BUTTON_12);
+            }
+            else {
+                // Anti ice on
+                globals.simVars->write(VJOY_BUTTON_13);
+            }
 #endif
+        }
         prevPitotHeatToggle = val;
     }
 
@@ -286,6 +290,7 @@ void powerLights::gpioSwitchesInput()
             }
             else {
                 globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
+                globals.simVars->write(KEY_COM1_VOLUME_SET, val);
             }
         }
         prevAvionics1Toggle = val;
@@ -304,6 +309,7 @@ void powerLights::gpioSwitchesInput()
             }
             else {
                 globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
+                globals.simVars->write(KEY_COM2_VOLUME_SET, val);
             }
         }
         prevAvionics2Toggle = val;
@@ -490,9 +496,7 @@ void powerLights::gpioParkBrakeInput()
         // Switch toggled
         if (val == 1 && simVars->parkingBrakeOn) {
             // Switch pressed and parking brake on so release it
-            globals.simVars->write(VJOY_BUTTON_16);
-            printf("Park brake OFF\n");
-            fflush(stdout);
+            globals.simVars->write(KEY_PARKING_BRAKE_SET, 0);
         }
         prevParkBrakeOffToggle = val;
     }
@@ -503,9 +507,7 @@ void powerLights::gpioParkBrakeInput()
         // Switch toggled
         if (val == 1 && !simVars->parkingBrakeOn) {
             // Switch pressed and parking brake off so apply it
-            globals.simVars->write(VJOY_BUTTON_16);
-            printf("Park brake ON\n");
-            fflush(stdout);
+            globals.simVars->write(KEY_PARKING_BRAKE_SET, 1);
         }
         prevParkBrakeOnToggle = val;
     }
