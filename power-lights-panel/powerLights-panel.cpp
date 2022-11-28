@@ -13,7 +13,7 @@
 #include "simvars.h"
 #include "powerLights.h"
 
-const char* powerLightsVersion = "v1.3.0";
+const char* powerLightsVersion = "v1.3.1";
 const bool Debug = false;
 
 struct globalVars globals;
@@ -38,7 +38,12 @@ void updateCommon()
     SimVars* simVars = &globals.simVars->simVars;
 
     // Electrics check
-    globals.electrics = globals.connected && simVars->dcVolts > 0;
+    if (globals.aircraft == AIRBUS_A310) {
+        globals.electrics = globals.connected && simVars->batteryLoad < 0;
+    }
+    else {
+        globals.electrics = globals.connected && simVars->dcVolts > 0;
+    }
 
     // Avionics check
     globals.avionics = globals.connected && (simVars->com1Status == 0 || simVars->com2Status == 0);

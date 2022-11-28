@@ -83,8 +83,7 @@ void powerLights::update()
     // Only update local values from sim if they are not currently being adjusted.
     // This stops them from jumping around due to lag of fetch/update cycle.
     if (lastApuMasterAdjust == 0) {
-        // Only relevant to A32NX
-        if (loadedAircraft == FBW_A320) {
+        if (loadedAircraft == AIRBUS_A310 || loadedAircraft == FBW_A320) {
             apuMaster = simVars->apuMasterSw > 0;
         }
         else if (simVars->apuStartSwitch > 0) {
@@ -116,7 +115,7 @@ void powerLights::update()
 
     if (lastApuBleedAdjust == 0) {
         // Only relevant to A32NX
-        if (loadedAircraft == FBW_A320) {
+        if (loadedAircraft == AIRBUS_A310 || loadedAircraft == FBW_A320) {
             apuBleed = simVars->apuBleed > 0;
         }
         else {
@@ -159,7 +158,7 @@ void powerLights::gpioSwitchesInput()
         // This allows a toggle to be switched without causing an
         // action (to fix an inverted toggle).
         if (prevApuBleedPush % 2 == 1) {
-            if (globals.aircraft == FBW_A320) {
+            if (globals.aircraft == AIRBUS_A310 || globals.aircraft == FBW_A320) {
                 globals.simVars->write(KEY_ELEC_BAT1, val);
             }
             else if (airliner) {
@@ -183,7 +182,7 @@ void powerLights::gpioSwitchesInput()
     if (val != INT_MIN && val != prevBattery2Toggle) {
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
-            if (globals.aircraft == FBW_A320) {
+            if (globals.aircraft == AIRBUS_A310 || globals.aircraft == FBW_A320) {
                 globals.simVars->write(KEY_ELEC_BAT2, val);
             }
             else if (airliner) {
