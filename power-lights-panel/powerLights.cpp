@@ -346,6 +346,10 @@ void powerLights::gpioButtonsInput()
                 globals.gpioCtrl->writeLed(apuStartControl, apuStart);
                 globals.simVars->write(KEY_APU_STARTER, apuStart);
             }
+            else if (!apuMaster) {
+                // If Start button pushed and Master Switch is off call for ramp instead
+                globals.simVars->write(KEY_TOGGLE_RAMPTRUCK);
+            }
         }
         prevApuStartPush = val;
         time(&lastApuStartAdjust);
