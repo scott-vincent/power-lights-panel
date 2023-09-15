@@ -171,7 +171,7 @@ void powerLights::gpioSwitchesInput()
             }
             else {
                 globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 1);
-                globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 2);
+                //globals.simVars->write(KEY_TOGGLE_MASTER_ALTERNATOR, 2);
             }
         }
         prevBattery1Toggle = val;
@@ -196,19 +196,27 @@ void powerLights::gpioSwitchesInput()
         prevBattery2Toggle = val;
     }
 
-    // Fuel Pump toggle
+    // Fuel Pump toggle (Jetway toggle on airliner)
     val = globals.gpioCtrl->readToggle(fuelPumpControl);
     if (val != INT_MIN && val != prevFuelPumpToggle) {
         // Switch toggled (ignore if APU Bleed being pressed)
         if (prevApuBleedPush % 2 == 1) {
-            // Toggle fuel pump
-            globals.simVars->write(KEY_FUEL_PUMP);
-            // Use same switch to toggle dome light on Cessna 152
-            globals.simVars->write(KEY_CABIN_LIGHTS_SET, val);
+            if (airliner) {
+                // Don't re-engage jetway if pushback being requested
+                if (simVars->pushbackState > 0) {
+                    globals.simVars->write(KEY_TOGGLE_JETWAY);
+                }
+            }
+            else {
+                // Toggle fuel pump
+                globals.simVars->write(KEY_FUEL_PUMP);
+                // Use same switch to toggle dome light on Cessna 152
+                globals.simVars->write(KEY_CABIN_LIGHTS_SET, val);
 #ifdef vJoyFallback
-            // Not working so use vJoy
-            //globals.simVars->write(VJOY_BUTTON_11);
+                // Not working so use vJoy
+                //globals.simVars->write(VJOY_BUTTON_11);
 #endif
+            }
         }
         prevFuelPumpToggle = val;
     }
@@ -287,32 +295,39 @@ void powerLights::gpioSwitchesInput()
                 globals.simVars->write(VJOY_BUTTON_14);
 #endif
             }
+            else if (loadedAircraft == CESSNA_152) {
+                // Turn Radios on/off
+                globals.simVars->write(KEY_COM1_VOLUME_SET, val);
+                globals.simVars->write(KEY_COM2_VOLUME_SET, val);
+            }
             else {
                 globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
-                globals.simVars->write(KEY_COM1_VOLUME_SET, val);
             }
         }
         prevAvionics1Toggle = val;
     }
 
-    // Avionics 2 toggle (Jetway on airliner)
-    val = globals.gpioCtrl->readToggle(avionics2Control);
-    if (val != INT_MIN && val != prevAvionics2Toggle) {
-        // Switch toggled (ignore if APU Bleed being pressed)
-        if (prevApuBleedPush % 2 == 1) {
-            if (airliner) {
-                // Don't re-engage jetway if pushback being requested
-                if (simVars->pushbackState > 0) {
-                    globals.simVars->write(KEY_TOGGLE_JETWAY);
-                }
-            }
-            else {
-                globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
-                globals.simVars->write(KEY_COM2_VOLUME_SET, val);
-            }
-        }
-        prevAvionics2Toggle = val;
-    }
+    // Avionics 2 toggle (not working so disable)
+    //val = globals.gpioCtrl->readToggle(avionics2Control);
+    //if (val != INT_MIN && val != prevAvionics2Toggle) {
+    //    // Switch toggled (ignore if APU Bleed being pressed)
+    //    if (prevApuBleedPush % 2 == 1) {
+    //        if (airliner) {
+    //            // Don't re-engage jetway if pushback being requested
+    //            if (simVars->pushbackState > 0) {
+    //                globals.simVars->write(KEY_TOGGLE_JETWAY);
+    //            }
+    //        }
+    //        else if (loadedAircraft == CESSNA_152) {
+    //            // Turn Radio 2 on/off
+    //            globals.simVars->write(KEY_COM2_VOLUME_SET, val);
+    //        }
+    //        else
+    //            globals.simVars->write(KEY_AVIONICS_MASTER_SET, val);
+    //        }
+    //    }
+    //    prevAvionics2Toggle = val;
+    //}
 }
 
 void powerLights::gpioButtonsInput()
