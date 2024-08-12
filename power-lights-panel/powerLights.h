@@ -9,6 +9,7 @@ private:
     SimVars* simVars;
     Aircraft loadedAircraft = UNDEFINED;
     bool airliner = false;
+    int bleedTest = 0;
 
     bool apuMaster = false;
     bool apuStart = false;

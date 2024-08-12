@@ -9,6 +9,8 @@
 // Comment the following line out if you don't want to use vJoy.
 #define vJoyFallback
 
+//#define DEBUG
+
 powerLights::powerLights()
 {
     simVars = &globals.simVars->simVars;
@@ -19,6 +21,22 @@ powerLights::powerLights()
 
 void powerLights::render()
 {
+#ifdef DEBUG
+    bleedTest--;
+    if (bleedTest < 0) {
+        bleedTest = 20;
+    }
+    if (bleedTest == 20) {
+        globals.gpioCtrl->writeLed(apuStartControl, true);
+        globals.gpioCtrl->writeLed(apuBleedControl, true);
+    }
+    else if (bleedTest == 5) {
+        globals.gpioCtrl->writeLed(apuStartControl, false);
+        globals.gpioCtrl->writeLed(apuBleedControl, false);
+    }
+    return;
+#endif
+
     if (!globals.electrics) {
         // Turn off LEDS
         globals.gpioCtrl->writeLed(apuMasterControl, false);
