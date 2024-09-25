@@ -22,15 +22,17 @@ powerLights::powerLights()
 void powerLights::render()
 {
 #ifdef DEBUG
-    bleedTest--;
-    if (bleedTest < 0) {
-        bleedTest = 20;
+    lightsTest--;
+    if (lightsTest < 0) {
+        lightsTest = 20;
     }
-    if (bleedTest == 20) {
+    if (lightsTest == 20) {
+        globals.gpioCtrl->writeLed(apuMasterControl, true);
         globals.gpioCtrl->writeLed(apuStartControl, true);
         globals.gpioCtrl->writeLed(apuBleedControl, true);
     }
-    else if (bleedTest == 5) {
+    else if (lightsTest == 5) {
+        globals.gpioCtrl->writeLed(apuMasterControl, false);
         globals.gpioCtrl->writeLed(apuStartControl, false);
         globals.gpioCtrl->writeLed(apuBleedControl, false);
     }
@@ -40,7 +42,7 @@ void powerLights::render()
     if (!globals.electrics) {
         // Turn off LEDS
         globals.gpioCtrl->writeLed(apuMasterControl, false);
-        globals.gpioCtrl->writeLed(apuStartControl, false);
+        //globals.gpioCtrl->writeLed(apuStartControl, false);
         globals.gpioCtrl->writeLed(apuBleedControl, false);
 
         // Make sure settings get re-initialised
@@ -82,6 +84,9 @@ void powerLights::update()
         prevFlapsDownToggle = -1;
         prevParkBrakeOffToggle = -1;
         prevParkBrakeOnToggle = -1;
+        if (simVars->sbParkBrake != -1) {
+            prevSbParkBrake = 0;
+        }
         if (simVars->altAboveGround < 50) {
             // Start with parking brake on (will only turn on when electrics enabled!)
             if (!simVars->parkingBrakeOn) {
@@ -535,6 +540,7 @@ void powerLights::gpioParkBrakeInput()
             globals.simVars->write(KEY_PARKING_BRAKE_SET, 0);
         }
         prevParkBrakeOffToggle = val;
+        return;
     }
 
     // Park brake on toggle
@@ -546,5 +552,22 @@ void powerLights::gpioParkBrakeInput()
             globals.simVars->write(KEY_PARKING_BRAKE_SET, 1);
         }
         prevParkBrakeOnToggle = val;
+        return;
+    }
+
+    // Check Switchbox parking brake
+    if (sbParkBrakeDelay > 0) {
+        sbParkBrakeDelay--;
+    }
+    else if (simVars->sbParkBrake != prevSbParkBrake) {
+        prevSbParkBrake = simVars->sbParkBrake;
+        if (simVars->sbParkBrake == 1 && !simVars->parkingBrakeOn) {
+            globals.simVars->write(KEY_PARKING_BRAKE_SET, 1);
+            sbParkBrakeDelay = 3;
+        }
+        else if (simVars->sbParkBrake == 0 && simVars->parkingBrakeOn) {
+            globals.simVars->write(KEY_PARKING_BRAKE_SET, 0);
+            sbParkBrakeDelay = 3;
+        }
     }
 }

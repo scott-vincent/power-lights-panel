@@ -9,7 +9,7 @@ private:
     SimVars* simVars;
     Aircraft loadedAircraft = UNDEFINED;
     bool airliner = false;
-    int bleedTest = 0;
+    int lightsTest = 0;
 
     bool apuMaster = false;
     bool apuStart = false;
@@ -20,6 +20,8 @@ private:
     int flapsDownVal = 20;
     int lastFlapsPos = -1;      // 0 = up, 4 = full
     bool parkBrakeOn = true;
+    int prevSbParkBrake = -1;
+    int sbParkBrakeDelay = 0;
 
     // Hardware controls
     int battery1Control = -1;
