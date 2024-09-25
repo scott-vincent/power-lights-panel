@@ -42,7 +42,7 @@ void powerLights::render()
     if (!globals.electrics) {
         // Turn off LEDS
         globals.gpioCtrl->writeLed(apuMasterControl, false);
-        //globals.gpioCtrl->writeLed(apuStartControl, false);
+        globals.gpioCtrl->writeLed(apuStartControl, false);
         globals.gpioCtrl->writeLed(apuBleedControl, false);
 
         // Make sure settings get re-initialised
